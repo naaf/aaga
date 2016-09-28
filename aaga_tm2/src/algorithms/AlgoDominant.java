@@ -10,7 +10,8 @@ import java.util.stream.Collectors;
 public class AlgoDominant {
 
 	private int edgeThreshold;
-	private final static Logger LOGGER = Logger.getLogger(AlgoDominant.class.getName());
+	private final static Logger LOGGER = Logger.getLogger(AlgoDominant.class
+			.getName());
 
 	public AlgoDominant(int edgeThreshold) {
 		this.edgeThreshold = 55;
@@ -50,6 +51,7 @@ public class AlgoDominant {
 
 		return res;
 	}
+
 	Point getPPC(List<Point> points) {
 		final Comparator<Point> comp = (p1, p2) -> Integer.compare(
 				neighbor(p1, points).size(), neighbor(p2, points).size());
@@ -63,72 +65,68 @@ public class AlgoDominant {
 
 	public ArrayList<Point> glouton(List<Point> points) {
 
-		System.out.println("edgeThreshold ==" +edgeThreshold);
+		System.out.println("edgeThreshold ==" + edgeThreshold);
 
 		List<Point> ps = new ArrayList<>(points);
 		List<Point> ensDominant = getPPI(points);
 		ps.removeAll(ensDominant);
-		ensDominant.forEach(p -> System.out.println(p +" ppi ==>" + neighbor(p, points)));
 		Point p;
 		do {
 			p = getMax(ps);
 			ensDominant.add(p);
 			ps.removeAll(neighbor(p, ps));
 			ps.remove(p);
-		} while (! isValide(points, ensDominant));
+		} while (!isValide(points, ensDominant));
 		return (ArrayList) ensDominant;
 	}
 
-	public ArrayList<Point> calcul(List<Point> ps, ArrayList<Point> result) {
+	public ArrayList<Point> calcul(List<Point> ps, ArrayList<Point> ensNo) {
 		ArrayList<Point> tmp = new ArrayList<>(ps);
-		tmp.removeAll(result);
-		ArrayList<Point> tmpResult = new ArrayList<>(result);
-		ArrayList<Point> resultA = result;
-		for (Point p : result) {
-			for (Point q : result) {
+		ArrayList<Point> tmpEnsNo = new ArrayList<>(ensNo);
+
+		for (Point p : ensNo) {
+			for (Point q : ensNo) {
 				if (p.distance(q) < 3 * edgeThreshold) {
-					for (Point k : tmp) {
-						tmpResult = new ArrayList<>(result);
-						tmpResult.remove(p);
-						tmpResult.remove(q);
-						tmpResult.add(k);
-//						if(isValide(ps, tmpResult)){
-							if(resultA.size() > tmpResult.size()){
-								resultA = tmpResult;
-								System.out.println("passe voa " + resultA.size());
-							}
-//						}
+					for (Point k : ps) {
+						tmpEnsNo.remove(p);
+						tmpEnsNo.remove(q);
+						tmpEnsNo.add(k);
+						
+						tmp.remove(k);
+						tmp.add(p);
+						tmp.add(q);
 
-
+						if (isValide(ps, tmpEnsNo)
+								&& ensNo.size() > tmpEnsNo.size()) {
+							return tmpEnsNo;
+						}
+//						System.out.print(" n : " + tmpEnsNo.size());
+//						System.out.println("old " + ensNo.size());
+						tmpEnsNo = new ArrayList<>(ensNo);
+						tmp = new ArrayList<>(ps);
+						
 					}
 				}
 			}
 		}
-		return resultA;
+		return ensNo;
 	}
-
+	
+	
 	public ArrayList<Point> localSearching(List<Point> points) {
-		ArrayList<Point> resultOld = null;
-		ArrayList<Point> result = glouton(points);
-		ArrayList<Point> resultTMP = glouton(points);
-		List<Point> ps = new ArrayList<>(points);
-		do {
-			do {
-				resultOld = new ArrayList<Point>();
-				resultOld.addAll(result);
-				result = calcul(ps, resultOld);
-				System.out.println("result.size() " + (result.size()));
-				System.out.println("resultOld.size() " + (resultOld.size()));
+		ArrayList<Point> ensNo = new ArrayList<>();
+		ArrayList<Point> newEnsNo = glouton(points);
 
-			} while (result.size() < resultOld.size());
-			resultTMP.addAll(resultOld);
-			ps = new ArrayList<>(points);
-			ps.removeAll(resultTMP);
-			for(Point p : resultTMP)
-				ps.removeAll(neighbor(p, ps));
-			result = glouton(ps);
-		} while (!ps.isEmpty());
-		return resultOld;
+		do {
+			ensNo = new ArrayList<>(newEnsNo);
+			newEnsNo = calcul(points, ensNo);
+
+			System.out.print("ensNo.size() " + (ensNo.size()));
+			System.out.println(", newEnsNo.size() " + (newEnsNo.size()));
+
+		} while (ensNo.size() > newEnsNo.size());
+
+		return ensNo;
 	}
 
 }
